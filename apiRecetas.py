@@ -1,8 +1,13 @@
 from flask import Flask, jsonify, request, make_response
 import jwt
 import datetime
+import os
+import psycopg2
 from functools import wraps
 
+
+DATABASE_URL = os.environ['DATABASE_URL']
+conn = psycopg2.connect(DATABASE_URL, sslmode='require')
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = "Prueba12345"
