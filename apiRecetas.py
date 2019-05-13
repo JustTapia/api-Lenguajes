@@ -1,7 +1,13 @@
 from flask import Flask, jsonify, request, make_response
 import jwt
 import datetime
+import os
+import psycopg2
 from functools import wraps
+
+
+DATABASE_URL = os.environ['postgres://jindmszffjwbze:7fbd8d5436109918c3b9d3af00bbd0e7b6ce10dee69c736d79e393405ebd9e12@ec2-54-235-208-103.compute-1.amazonaws.com:5432/d9agm875675pud']
+conn = psycopg2.connect(DATABASE_URL, sslmode='require')
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = "Prueba12345"
