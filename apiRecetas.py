@@ -6,11 +6,12 @@ import psycopg2
 from functools import wraps
 
 
+app = Flask(__name__)
+app.config['SECRET_KEY'] = "Prueba12345"
+
 DATABASE_URL = os.environ['DATABASE_URL']
 conn = psycopg2.connect(DATABASE_URL, sslmode='require')
 
-app = Flask(__name__)
-app.config['SECRET_KEY'] = "Prueba12345"
 
 def token_required(f):
 	@wraps(f)
