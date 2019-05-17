@@ -4,14 +4,15 @@ import datetime
 import os
 import psycopg2
 from functools import wraps
+from cryptography.fernet import Fernet
 
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = "Prueba12345"
+app.config['SECRET_KEY'] = "Secret Key"
+llave_cifra = b'pRmgMa8T0INjEAfksaq2aafzoZXEuwKI7wDe4c1F8AY='
 
 DATABASE_URL = os.environ['DATABASE_URL']
 conn = psycopg2.connect(DATABASE_URL, sslmode='require')
-
 
 def token_required(f):
 	@wraps(f)
@@ -19,42 +20,76 @@ def token_required(f):
 		token = request.args.get('token')
 
 		if not token:
-			return jsonify({'mesage' : 'No hay Token'}),403
+			return abort(401)
 
 		try:
 			data = jwt.decode(token, app.config['SECRET_KEY'])
 		except:
-			return jsonify({'mesage' : 'Token invalido'}),403
+			return abort(401)
 
 
 		return f(*args, **kwargs)
 	return decorated
 
-@app.route('/get_recetas')
+@app.route('/get_recetas',METHODS=['GET'])
 @token_required
 def getRecetas():
 	return jsonify({'mesage' : 'Recetas detras de Token'})
 
-@app.route('/show_receta')
+@app.route('/show_receta',METHODS=['GET'])
 @token_required
 def showReceta():
 	return jsonify({'mesage' : 'Contenido de receta con Token'})
 
-@app.route('/create_receta')
+@app.route('/create_receta',METHODS=['POST']) ##asosaoidnss.heroku
 @token_required
 def createReceta():
 	return jsonify({'mesage' : 'Receta a crear con Token'})
 
 
-@app.route('/login')
+def auth_required(f):
+	@wraps(f)
+	def decorated(*args, **kwargs):
+		auth = request.authorization
+		cursor = conn.cursor()
+		cursor.callproc("BuscarUsuario",[auth.username,])
+		res = cursor.fetchone()
+		if (res == []):
+			return abort("El usuario o la contraseña son incorrectos")
+
+		else: 
+			cipher_suite = Fernet(key)
+			contrsena = (cipher_suite.decrypt(res[1][2])) #Descifrar
+			if (contrsena != auth.password):
+				return abort("El usuario o la contraseña son incorrectos")
+
+@app.route('/login', METHODS=['GET'])
+@auth_required
 def login():
-	auth= request.authorization
+	token = jwt.encode({'user': auth.username, 'exp' : datetime.datetime.utcnow() + datetime.timedelta(minutes=30)},app.config['SECRET_KEY'])
+	return jsonify({'token': token.decode('UTF-8')})
 
-	if auth and auth.password == "password":
-		token = jwt.encode({'user': auth.username, 'exp' : datetime.datetime.utcnow() + datetime.timedelta(minutes=30)},app.config['SECRET_KEY'])
+@app.route('singUp',METHODS=['POST'])
+	def singUp():
+		correo = request.args.get('correo')
+		contrasena = request.args.get('contrasena')
 
-		return jsonify({'token': token.decode('UTF-8')})
-	return make_response('Could not verify!', 401, {'WWW-Authenticate' : 'Basic realm="Login Requerido"'})
+		cursor = conn.cursor()
+		cursor.callproc("GetUsuarios",[,])
+		res = cursor.fetchall()
+
+		for tupla in res
+			if (tupla[1] == correo):
+				return abort("El correo ya está asociado a otra cuenta")
+
+
+	contrasena = ' '.join(format(ord(x), 'b') for x in contrasena)
+	cipher_suite = Fernet(key)
+	ciphered_text = cipher_suite.encrypt(contrasena)   #Para cifrar 
+
+	cursor.callproc("InsertarUsuarios",[correo,contrasena,])
+	return jsonify{'message': 'El usuario ha sido registrado'}
+
 
 if __name__ == '__main__':
     app.run()
