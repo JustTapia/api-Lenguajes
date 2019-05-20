@@ -48,7 +48,7 @@ def getRecetas():
 	recetasJSON = {"Nombres" : recetas}
 	return jsonify(recetasJSON)
 
-@app.route('/buscar_recetas', methods=['GET']) #/get_recetas?cBusqueda=Nombre&strBusqueda=Pollo&token=blalblasadfa
+@app.route('/buscar_recetas', methods=['GET']) #/buscar_recetas?cBusqueda=Nombre&strBusqueda=Pollo&token=blalblasadfa
 @token_required
 def buscarRecetas():
 
